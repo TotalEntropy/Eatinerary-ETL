@@ -93,6 +93,8 @@ business=business.loc[:, ['name', 'address', 'postal_code', 'city', 'latitude', 
 business.columns=['Name', 'Address', 'Postal_code', 'City', 'Latitude', 'Longitude', 'Categories', 'Stars', 'Hours', 'Attributes']
 
 
+# ## Handling the hours column
+
 # In[10]:
 
 
@@ -100,8 +102,6 @@ business.columns=['Name', 'Address', 'Postal_code', 'City', 'Latitude', 'Longitu
 hours_raw=json_normalize(data=business['Hours'])
 business.drop(columns='Hours', inplace=True)
 
-
-# ## Handling the hours column
 
 # In[11]:
 
@@ -131,11 +131,12 @@ hours=hours.apply(lambda x: x.str.strip())
 # In[14]:
 
 
-# Create new list of column names
+# # Create new list of column names and convert the time to minutes
 columnsHours=hours.columns
 for column in columnsHours:
     hours[column]=hours[column].replace('$', ':00', regex=True)
-    hours[column]=pd.to_timedelta(hours['Monday_open'], 's')
+    hours[column]=pd.to_timedelta(hours[column])
+    hours[column]=hours[column].dt.seconds//60
 
 
 # In[15]:
@@ -503,9 +504,8 @@ business=business.join(attributes, how='inner').drop(columns='Restaurant_id').re
 
 
 # Dependencies
-from sqlalchemy import create_engine, Integer, String, Float, DateTime, Boolean
-# from sqlalchemy import MetaData, Table, Column
-from sourceData.config import conn
+from sqlalchemy import create_engine, Integer, String, Float, Time, Boolean
+from config import conn #Format is 'user:pass@host'
 import pymysql
 
 
@@ -533,165 +533,27 @@ engine = create_engine(f'mysql+pymysql://{conn}/eatinerary', echo=True)
 # In[56]:
 
 
-# # Set up the Category table
-# meta = MetaData()
+# Creating sql database and tables for the restaurants and the unique categories
+uniqueCategories.to_sql('category', engine, if_exists='replace', index_label='Category_id')
 
-# Movie = Table(
-#     'categories', meta,
-#     Column('Category', String(30)))
-
-# meta.create_all(engine)
+# Set primary key for category table
+engine.execute('ALTER table category ADD PRIMARY KEY (`category_id`)')
 
 
 # In[57]:
-
-
-# Creating sql database and tables for the restaurants and the unique categories
-uniqueCategories.to_sql('categories', engine, if_exists='replace', index_label='Category_id')
-
-
-# In[58]:
-
-
-# # Set up the Restaurant table
-# meta = MetaData()
-
-# Movie = Table(
-#     'restaurant', meta,
-#     Column('Name', String(50)),
-#     Column('Address', String(50)),
-#     Column('Postal_code', String(10)),
-#     Column('City', String(30)),
-#     Column('Latitude', Integer),
-#     Column('Longitude', Integer),
-#     Column('Stars', Float),
-#     Column('Monday_open', DateTime),
-#     Column('Monday_close', DateTime),
-#     Column('Tuesday_open', DateTime),
-#     Column('Tuesday_close', DateTime),
-#     Column('Wednesday_open', DateTime),
-#     Column('Wednesday_close', DateTime),
-#     Column('Thursday_open', DateTime),
-#     Column('Thursday_close', DateTime),
-#     Column('Friday_open', DateTime),
-#     Column('Friday_close', DateTime),
-#     Column('Saturday_open', DateTime),
-#     Column('Saturday_close', DateTime),
-#     Column('Sunday_open', DateTime),
-#     Column('Sunday_close', DateTime),
-#     Column('Category_ids', String(50)),
-#     Column('Over_19', Boolean),
-#     Column('BYOBCorkage', Boolean),
-#     Column('BikeParking', Boolean),
-#     Column('BusinessAcceptsCreditCards', Boolean),
-#     Column('CoatCheck', Boolean),
-#     Column('DogsAllowed', Boolean),
-#     Column('GoodForDancing', Boolean),
-#     Column('GoodForKids', Boolean),
-#     Column('HappyHour', Boolean),
-#     Column('HasTV', Boolean),
-#     Column('OutdoorSeating', Boolean),
-#     Column('RestaurantsCounterService', Boolean),
-#     Column('RestaurantsGoodForGroups', Boolean),
-#     Column('RestaurantsPriceRange2', Integer),
-#     Column('RestaurantsTableService', Boolean),
-#     Column('RestaurantsTakeOut', Boolean),
-#     Column('WheelchairAccessible', Boolean),
-#     Column('Ambience_romantic', Boolean),
-#     Column('Ambience_touristy', Boolean),
-#     Column('Ambience_hipster', Boolean),
-#     Column('Ambience_intimate', Boolean),
-#     Column('Ambience_classy', Boolean),
-#     Column('Ambience_upscale', Boolean),
-#     Column('Ambience_divey', Boolean),
-#     Column('Ambience_trendy', Boolean),
-#     Column('Ambience_casual', Boolean),
-#     Column('Parking_garage', Boolean),
-#     Column('Parking_valet', Boolean),
-#     Column('Parking_street', Boolean),
-#     Column('Parking_validated', Boolean),
-#     Column('Parking_lot', Boolean),
-#     Column('Meal_dessert', Boolean),
-#     Column('Meal_brunch', Boolean),
-#     Column('Meal_latenight', Boolean),
-#     Column('Meal_lunch', Boolean),
-#     Column('Meal_dinner', Boolean),
-#     Column('Meal_breakfast', Boolean),
-#     Column('Best_night_monday', Boolean),
-#     Column('Best_night_tuesday', Boolean),
-#     Column('Best_night_friday', Boolean),
-#     Column('Best_night_wednesday', Boolean),
-#     Column('Best_night_thursday', Boolean),
-#     Column('Best_night_sunday', Boolean),
-#     Column('Best_night_saturday', Boolean),
-#     Column('Alcohol_beer_and_wine', Boolean),
-#     Column('Alcohol_full_bar', Boolean),
-#     Column('Dietary_Restrictions_dairy-free', Boolean),
-#     Column('Dietary_Restrictions_gluten-free', Boolean),
-#     Column('Dietary_Restrictions_vegan', Boolean),
-#     Column('Dietary_Restrictions_kosher', Boolean),
-#     Column('Dietary_Restrictions_halal', Boolean),
-#     Column('Dietary_Restrictions_soy-free', Boolean),
-#     Column('Dietary_Restrictions_vegetarian', Boolean),
-#     Column('Music_dj', Boolean),
-#     Column('Music_live', Boolean),
-#     Column('Music_background_music', Boolean),
-#     Column('Music_no_music', Boolean),
-#     Column('Music_jukebox', Boolean),
-#     Column('Music_video', Boolean),
-#     Column('Music_karaoke', Boolean),
-#     Column('Noise_quiet', Boolean),
-#     Column('Noise_average', Boolean),
-#     Column('Noise_loud', Boolean),
-#     Column('Noise_very_loud', Boolean),
-#     Column('Restaurants_Attire_dressy', Boolean),
-#     Column('Restaurants_Attire_casual', Boolean),
-#     Column('Restaurants_Attire_formal', Boolean),
-#     Column('Smoking_no', Boolean),
-#     Column('Smoking_outdoor', Boolean),
-#     Column('Smoking_yes', Boolean)
-# )
-
-# meta.create_all(engine)
-
-
-# In[59]:
 
 
 # Removing all special characters
 business['Name']=business['Name'].str.replace('[^A-Za-z\s]+', '')
 
 
-# In[60]:
-
-
-dataType={'Name':String(75), 'Address':String(75), 'Postal_code':String(10), 'City':String(30), 'Latitude':Integer, 'Longitude':Integer, 'Stars':Float, 'Monday_open':DateTime,
-          'Monday_close':DateTime, 'Tuesday_open':DateTime, 'Tuesday_close':DateTime, 'Wednesday_open':DateTime, 'Wednesday_close':DateTime, 'Thursday_open':DateTime,
-          'Thursday_close':DateTime, 'Friday_open':DateTime, 'Friday_close':DateTime, 'Saturday_open':DateTime, 'Saturday_close':DateTime, 'Sunday_open':DateTime,
-          'Sunday_close':DateTime, 'Category_ids':String(50), 'Over_19':Boolean, 'BYOBCorkage':Boolean, 'BikeParking':Boolean, 'BusinessAcceptsCreditCards':Boolean, 'CoatCheck':Boolean,
-          'DogsAllowed':Boolean, 'GoodForDancing':Boolean, 'GoodForKids':Boolean, 'HappyHour':Boolean, 'HasTV':Boolean, 'OutdoorSeating':Boolean, 'RestaurantsCounterService':Boolean,
-          'RestaurantsGoodForGroups':Boolean, 'RestaurantsPriceRange2':Integer, 'RestaurantsTableService':Boolean, 'RestaurantsTakeOut':Boolean, 'WheelchairAccessible':Boolean,
-          'Ambience_romantic':Boolean, 'Ambience_touristy':Boolean, 'Ambience_hipster':Boolean, 'Ambience_intimate':Boolean, 'Ambience_classy':Boolean, 'Ambience_upscale':Boolean,
-          'Ambience_divey':Boolean, 'Ambience_trendy':Boolean, 'Ambience_casual':Boolean, 'Parking_garage':Boolean, 'Parking_valet':Boolean, 'Parking_street':Boolean,
-          'Parking_validated':Boolean, 'Parking_lot':Boolean, 'Meal_dessert':Boolean, 'Meal_brunch':Boolean, 'Meal_latenight':Boolean, 'Meal_lunch':Boolean, 'Meal_dinner':Boolean,
-          'Meal_breakfast':Boolean, 'Best_night_monday':Boolean, 'Best_night_tuesday':Boolean, 'Best_night_friday':Boolean, 'Best_night_wednesday':Boolean,
-          'Best_night_thursday':Boolean, 'Best_night_sunday':Boolean, 'Best_night_saturday':Boolean, 'Alcohol_beer_and_wine':Boolean, 'Alcohol_full_bar':Boolean,
-          'Dietary_Restrictions_dairy-free':Boolean, 'Dietary_Restrictions_gluten-free':Boolean, 'Dietary_Restrictions_vegan':Boolean, 'Dietary_Restrictions_kosher':Boolean,
-          'Dietary_Restrictions_halal':Boolean, 'Dietary_Restrictions_soy-free':Boolean, 'Dietary_Restrictions_vegetarian':Boolean, 'Music_dj':Boolean, 'Music_live':Boolean,
-          'Music_background_music':Boolean, 'Music_no_music':Boolean, 'Music_jukebox':Boolean, 'Music_video':Boolean, 'Music_karaoke':Boolean, 'Noise_quiet':Boolean,
-          'Noise_average':Boolean, 'Noise_loud':Boolean, 'Noise_very_loud':Boolean, 'Restaurants_Attire_dressy':Boolean, 'Restaurants_Attire_casual':Boolean,
-          'Restaurants_Attire_formal':Boolean, 'Smoking_no':Boolean, 'Smoking_outdoor':Boolean, 'Smoking_yes':Boolean}
-
-
-# In[61]:
+# In[58]:
 
 
 # Creating sql database and tables for the restaurants and the unique categories
-business.to_sql('restaurant', engine, if_exists='replace', index_label='Restaurant_id', dtype=dataType)
+business.to_sql('restaurant', engine, if_exists='replace', index_label='Restaurant_id')
+# , dtype=dataType)
 
-
-# In[ ]:
-
-
-
+# Set primary key for restaurant table
+engine.execute('ALTER table restaurant ADD PRIMARY KEY (`restaurant_id`)')
 
