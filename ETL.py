@@ -552,7 +552,6 @@ business['Name']=business['Name'].str.replace('[^A-Za-z\s]+', '')
 
 # Creating sql database and tables for the restaurants and the unique categories
 business.to_sql('restaurant', engine, if_exists='replace', index_label='Restaurant_id')
-# , dtype=dataType)
 
 # Set primary key for restaurant table
 engine.execute('ALTER table restaurant ADD PRIMARY KEY (`restaurant_id`)')
