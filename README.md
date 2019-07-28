@@ -1,5 +1,5 @@
 # Project Name: EATinerary
-## Members: Brian Haley and Anna Francesca Gatus
+## Members: Brian and Anna Francesca Gatus
 ### [EATinerary project](https://github.com/users/TotalEntropy/projects/2)
 ### Linked repos: [EATinerary-ETL](https://github.com/TotalEntropy/Eatinerary.git)
 #### Purpose
