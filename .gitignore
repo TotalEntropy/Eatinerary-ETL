@@ -103,5 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Config files
+# Custom files
 config.py
+business.json
